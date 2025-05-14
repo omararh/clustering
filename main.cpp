@@ -11,7 +11,7 @@ public:
     }
 
     using Solver::verifyParetoFront;
-    using Solver::sortPointsByFirstDimension;
+//    using Solver::sortPointsByFirstDimension;
 };
 
 int main(int argc, char** argv) {

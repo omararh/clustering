@@ -16,7 +16,6 @@ using namespace std;
 */
 class Solver {
 private:
-    size_t D; // Dimension of points
 
     /**
      * @brief Display a single point
@@ -25,6 +24,7 @@ private:
     void displayPoint(size_t index) const;
 
 protected:
+    size_t D; // Dimension of points
     vector<double> points;        // Point coordinates (flat array: x1,y1,x2,y2,...)
     // TODO: add heuristic to return a well chosen 'k'
     size_t K;                     // Number of clusters
@@ -73,11 +73,6 @@ protected:
      * @return True if valid Pareto front, false otherwise
      */
     bool verifyParetoFront() const;
-
-    /**
-     * @brief Sort points according to first dimension (useful for DP approaches)
-     */
-    void sortPointsByFirstDimension();
 
 public:
     /**
