@@ -26,9 +26,8 @@ private:
 protected:
     size_t D; // Dimension of points
     vector<double> points;        // Point coordinates (flat array: x1,y1,x2,y2,...)
-    // TODO: add heuristic to return a well chosen 'k'
-    size_t K;                     // Number of clusters
     size_t N;                     // Number of points
+    size_t K = sqrt(N);        // Number of clusters
     vector<size_t> solution;      // Cluster assignment for each point
     double solutionCost;          // Total cost of the current solution
     bool isSorted;                // Flag indicating if points are sorted (important for DP approaches)

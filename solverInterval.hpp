@@ -4,7 +4,7 @@
 #include <utility>
 
 
-class SolverInterval : public Solver {
+class SolverInterval : public Solver2D {
 
 protected:
 
