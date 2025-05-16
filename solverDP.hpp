@@ -50,6 +50,25 @@ public:
     MatrixDouble getMatrix() {
         return matrixDP;
     }
+
+protected:
+    // Helper methods for solve()
+    bool validateInputs();
+    void initializeMatrix();
+    void fillDPMatrix();
+    void buildSolutionFromMatrix();
+    void calculateFinalCost();
+    bool isMatrixAvailable();
+
+    // Structure to hold optimal split information
+    struct OptimalSplit {
+        double cost;
+        uint splitPoint;
+        bool isValid;
+    };
+
+    // Find optimal split point
+    OptimalSplit findOptimalSplit(uint k, uint n, const vector<double>& v);
 };
 
 
