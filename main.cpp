@@ -78,7 +78,7 @@ int main(int argc, char** argv) {
         solver.displaySolution();
 
         // AJOUT: Maintenant, nettoyons la matrice (après l'avoir affichée)
-        solver.cleanupMatrix();
+        solver.getMatrix().deleteMatrix();
 
     } catch (const std::exception& e) {
         std::cerr << "ERROR: " << e.what() << std::endl;

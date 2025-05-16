@@ -47,10 +47,9 @@ public:
     void solve();
     void printMatrixDP();
     void printFinalCosts(string sep);
-
-    // Ajout d'une méthode pour nettoyer la matrice séparément
-    void cleanupMatrix() {
-        matrixDP.deleteMatrix();
+    MatrixDouble getMatrix() {
+        return matrixDP;
     }
 };
+
 
