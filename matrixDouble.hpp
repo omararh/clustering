@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <stdexcept>
+#include <iostream>
 
 /**
  * @class MatrixDouble
@@ -39,7 +40,10 @@ public:
         rows = numRows;
         cols = numCols;
 
+        std::cout << "Initialisation de la matrice: " << rows << " rows, " << cols << " cols" << std::endl;
+
         // Resize and initialize data with zeros
+        data.clear();
         data.resize(rows);
         for (size_t i = 0; i < rows; ++i) {
             data[i].resize(cols, 0.0);
@@ -54,6 +58,8 @@ public:
      */
     double getElement(size_t rowIndex, size_t colIndex) const {
         if (rowIndex >= rows || colIndex >= cols) {
+            std::cerr << "Matrix index out of bounds: " << rowIndex << "," << colIndex
+                      << " (matrix is " << rows << "x" << cols << ")" << std::endl;
             throw std::out_of_range("Matrix index out of bounds");
         }
         return data[rowIndex][colIndex];
@@ -67,6 +73,8 @@ public:
      */
     void setElement(size_t rowIndex, size_t colIndex, double value) {
         if (rowIndex >= rows || colIndex >= cols) {
+            std::cerr << "Matrix index out of bounds: " << rowIndex << "," << colIndex
+                      << " (matrix is " << rows << "x" << cols << ")" << std::endl;
             throw std::out_of_range("Matrix index out of bounds");
         }
         data[rowIndex][colIndex] = value;
@@ -100,4 +108,3 @@ public:
         return cols;
     }
 };
-

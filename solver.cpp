@@ -1,7 +1,6 @@
 #include <iostream>
 #include <cmath>
 #include <fstream>
-#include <algorithm>
 #include <stdexcept>
 #include "solver.hpp"
 

@@ -15,22 +15,21 @@ using namespace std;
 * with a focus on front of Pareto optimization problems.
 */
 class Solver {
-private:
+
+protected:
+    size_t D; // Dimension of points
+    vector<double> points;        // Point coordinates (flat array: x1,y1,x2,y2,...)
+    size_t N;                     // Number of points
+    size_t K;        // Number of clusters
+    vector<size_t> solution;      // Cluster assignment for each point
+    double solutionCost;          // Total cost of the current solution
+    bool isSorted;                // Flag indicating if points are sorted (important for DP approaches)
 
     /**
      * @brief Display a single point
      * @param index Index of the point to display
      */
     void displayPoint(size_t index) const;
-
-protected:
-    size_t D; // Dimension of points
-    vector<double> points;        // Point coordinates (flat array: x1,y1,x2,y2,...)
-    size_t N;                     // Number of points
-    size_t K = sqrt(N);        // Number of clusters
-    vector<size_t> solution;      // Cluster assignment for each point
-    double solutionCost;          // Total cost of the current solution
-    bool isSorted;                // Flag indicating if points are sorted (important for DP approaches)
 
     /**
      * @brief Calculate squared Euclidean distance between two points
@@ -118,7 +117,10 @@ public:
      * @brief Set the number of clusters
      * @param k Number of clusters
      */
-    void setNbClusters(size_t k) { K = k; }
+    void setNbClusters() {
+        K = std::max(3u, static_cast<unsigned int>(std::sqrt(N)));
+        std::cout << "Nombre de clusters défini à: " << K << std::endl;
+    }
 
     /**
      * @brief Import data from file

@@ -1,18 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "solver.hpp"
-
-// Classe concrète minimale héritant de Solver pour pouvoir l'instancier
-class MinimalSolver : public Solver {
-public:
-    void solve() override {
-        std::cout << "MinimalSolver::solve() - Cette méthode n'est pas implémentée." << std::endl;
-    }
-
-    using Solver::verifyParetoFront;
-//    using Solver::sortPointsByFirstDimension;
-};
+#include "medoidsDP.hpp"
 
 int main(int argc, char** argv) {
     std::string filename = "data/small_instance.txt";  // Default filename
@@ -54,16 +43,42 @@ int main(int argc, char** argv) {
         std::cout << "Nombre attendu: " << static_cast<int>(n) * static_cast<int>(d) << std::endl;
         file.close();
 
-        std::cout << "\nMaintenant, essayons d'utiliser la classe Solver:" << std::endl;
+        std::cout << "\nMaintenant, essayons d'utiliser MedoidsDP:" << std::endl;
 
-        // Créer une instance de notre solveur minimal
-        MinimalSolver solver;
+        // Créer une instance de notre solveur MedoidsDP
+        MedoidsDP solver;
 
         // Import the data file
         std::cout << "Importing data from: " << filename << std::endl;
         solver.import(filename);
 
-        // Le reste du code...
+        // Vérifier que les données sont chargées correctement
+        std::cout << "Après import: N=" << solver.getNbPoints() << ", D=" << solver.getDimension() << std::endl;
+
+        // Définir le nombre de clusters (K)
+        solver.setNbClusters(); // Utiliser une valeur par défaut (sqrt(N))
+        std::cout << "Nombre de clusters: " << solver.getNbClusters() << std::endl;
+
+        // Résoudre le problème
+        std::cout << "Résolution en cours..." << std::endl;
+        solver.solve();
+
+        // Afficher les résultats
+        std::cout << "Coût de la solution: " << solver.getSolutionCost() << std::endl;
+
+        // Afficher la matrice DP
+        std::cout << "Matrice DP:" << std::endl;
+        solver.printMatrixDP();
+
+        // Afficher les coûts finaux
+        std::cout << "Coûts finaux:" << std::endl;
+        solver.printFinalCosts(" | ");
+
+        // Afficher la solution complète
+        solver.displaySolution();
+
+        // AJOUT: Maintenant, nettoyons la matrice (après l'avoir affichée)
+        solver.cleanupMatrix();
 
     } catch (const std::exception& e) {
         std::cerr << "ERROR: " << e.what() << std::endl;
