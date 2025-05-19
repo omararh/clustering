@@ -12,6 +12,7 @@ protected:
 
 private:
     // Helper functions for cost calculations
+    void calculateClusterCosts(uint end, vector<double> &v, bool isFromBeginning);
     void computeInitialCosts(uint start, uint end, vector<vector<double>> &d);
     void updateCostsRecursively(uint start, uint end, uint lastPoint, uint len, vector<vector<double>> &d);
     double findMinimumCost(uint start, uint end, uint len, const vector<vector<double>> &d);

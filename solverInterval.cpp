@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <iostream>
+#include <numeric>
 #include "solverInterval.hpp"
 
 
@@ -28,9 +29,7 @@ void SolverInterval::resort() {
 
     // Create a vector of indices
     std::vector<size_t> indices(N);
-    for (size_t i = 0; i < N; ++i) {
-        indices[i] = i;
-    }
+    std::iota(indices.begin(), indices.end(), 0); // fill from 0 to N-1
 
     // Sort indices based on the first dimension
     std::sort(indices.begin(), indices.end(), [this](size_t a, size_t b) {
