@@ -25,14 +25,21 @@
  */
 class SolverDP : public SolverInterval {
 
-protected:
+public:
+    void solve();
+    void printMatrixDP();
+    void printFinalCosts(string sep);
+    MatrixDouble getMatrix() {
+        return matrixDP;
+    }
 
+protected:
     MatrixDouble matrixDP;
     uint lastIndex;
     /**
      * @brief Initializes the first row of the DP matrix with costs for single-cluster configurations and stores the results in the matrix
      */
-    void fillFirstLine();
+    void fillFirstLine(vector<double>& v);
     /**
     * @brief Calculates optimal costs for all possible clusters ending at index i
     */
@@ -43,19 +50,10 @@ protected:
     virtual void clusterCostsFromBeginning(vector<double>  & v)=0;
 
 
-public:
-    void solve();
-    void printMatrixDP();
-    void printFinalCosts(string sep);
-    MatrixDouble getMatrix() {
-        return matrixDP;
-    }
-
-protected:
     // Helper methods for solve()
     bool validateInputs();
     void initializeMatrix();
-    void fillDPMatrix();
+    void fillDPMatrix(vector<double>& v);
     void buildSolutionFromMatrix();
     void calculateFinalCost();
     bool isMatrixAvailable();

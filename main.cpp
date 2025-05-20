@@ -4,7 +4,7 @@
 #include "medoidsDP.hpp"
 
 int main(int argc, char** argv) {
-    std::string filename = "data/small_instance.txt";  // Default filename
+    std::string filename = "data/very_small_instance.txt";  // Default filename
     if (argc > 1) {
         filename = argv[1];
     }

@@ -55,9 +55,9 @@ void MedoidsDP::calculateClusterCosts(uint end, vector<double> &v, bool isFromBe
         if (len == 1) {
             computeInitialCosts(clusterStart, clusterEnd, d);
         }
-            // Apply recurrence relation for longer clusters
+        // Apply recurrence relation for longer clusters
         else {
-            updateCostsRecursively(clusterStart, clusterEnd, lastPoint, len, d);
+            updateCostsIteratively(clusterStart, clusterEnd, lastPoint, len, d);
         }
 
         // Find the medoid that minimizes cost for this length
@@ -91,7 +91,7 @@ void MedoidsDP::computeInitialCosts(uint start, uint end, vector<vector<double>>
 * @param len Current length of the cluster
 * @param d Cost matrix to update
 */
-void MedoidsDP::updateCostsRecursively(uint start, uint end, uint lastPoint, uint len, vector<vector<double>> &d) {
+void MedoidsDP::updateCostsIteratively(uint start, uint end, uint lastPoint, uint len, vector<vector<double>> &d) {
     // For each potential medoid in the current interval
     for (uint medoid = start; medoid <= end; medoid++) {
         if (medoid < lastPoint) {

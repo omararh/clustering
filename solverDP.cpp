@@ -53,10 +53,8 @@ void SolverDP::printMatrixDP() {
 /**
  * Fill the first row of the DP matrix with costs for single-cluster configurations
  */
-void SolverDP::fillFirstLine() {
+void SolverDP::fillFirstLine(vector<double>& v) {
     if (N == 0) return;
-
-    vector<double> v(N, 0.0);
 
     // Calculate costs for clusters that start from the beginning of the array
     clusterCostsFromBeginning(v);
@@ -82,11 +80,12 @@ void SolverDP::solve() {
     // Initialize DP matrix
     initializeMatrix();
 
+    vector<double> v(N, 0.0);
     // Fill the first line representing single cluster costs
-    fillFirstLine();
+    fillFirstLine(v);
 
     // Fill the rest of the matrix using dynamic programming
-    fillDPMatrix();
+    fillDPMatrix(v);
 
     // Backtracking to build the solution
     buildSolutionFromMatrix();
@@ -129,9 +128,8 @@ void SolverDP::initializeMatrix() {
 /**
  * Fill the dynamic programming matrix with optimal costs
  */
-void SolverDP::fillDPMatrix() {
+void SolverDP::fillDPMatrix(vector<double>& v) {
     for (uint k = 1; k < K && k < matrixDP.getRows(); k++) {
-        vector<double> v(N, 0.0);
 
         for (uint n = k; n < N; n++) {
             // Get costs for clusters ending at point n
