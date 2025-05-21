@@ -19,7 +19,7 @@ void SolverDP::printFinalCosts(string sep) {
 
     for (uint i = 0; i < K; i++) {
         if (i < matrixDP.getRows() && N-1 < matrixDP.getCols()) {
-            cout << matrixDP.getElement(i, N-1) << sep;
+            cout << "avec " << i + 1 << " clusters = "<< matrixDP.getElement(i, N-1) << sep;
         } else {
             cout << "NA" << sep;
         }

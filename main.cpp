@@ -32,12 +32,6 @@ int main(int argc, char** argv) {
         int count = 0;
         while (file >> value) {
             count++;
-            if (count <= 10) {
-                std::cout << "Valeur " << count << ": " << value << std::endl;
-            }
-            else if (count == 11) {
-                std::cout << "..." << std::endl;
-            }
         }
         std::cout << "Nombre total de valeurs dans le fichier: " << count << std::endl;
         std::cout << "Nombre attendu: " << static_cast<int>(n) * static_cast<int>(d) << std::endl;
@@ -67,7 +61,7 @@ int main(int argc, char** argv) {
         std::cout << "Coût de la solution: " << solver.getSolutionCost() << std::endl;
 
         // Afficher la matrice DP
-        std::cout << "Matrice DP:" << std::endl;
+        std::cout << "Matrice DP: (affichage des lignes en ordre inverse)" << std::endl;
         solver.printMatrixDP();
 
         // Afficher les coûts finaux
