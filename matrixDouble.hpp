@@ -40,8 +40,6 @@ public:
         rows = numRows;
         cols = numCols;
 
-        std::cout << "Initialisation de la matrice: " << rows << " rows, " << cols << " cols" << std::endl;
-
         // Resize and initialize data with zeros
         data.clear();
         data.resize(rows);

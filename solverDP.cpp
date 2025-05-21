@@ -120,7 +120,6 @@ bool SolverDP::validateInputs() {
  * Initialize the dynamic programming matrix
  */
 void SolverDP::initializeMatrix() {
-    cout << "Initialisation de la matrice avec K=" << K << " et N=" << N << endl;
     matrixDP.initMatrix(N, K);
     cout << "Matrice initialisée avec " << matrixDP.getRows() << " lignes et " << matrixDP.getCols() << " colonnes" << endl;
 }
