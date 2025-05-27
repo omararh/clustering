@@ -2,28 +2,31 @@
 #include <limits>
 #include <iostream>
 
+/**
+ * Computes cluster costs for all possible clusters ending at index i
+ * Used by the DP algorithm to calculate the cost of placing the last cluster
+ * at different positions ending at point i
+ *
+ * @param i The ending index for all clusters to compute
+ * @param v Output vector where v[j] = cost of cluster with j+1 points ending at i
+ */
 void MedoidsDP::clusterCostsBefore(uint i, vector<double>& v) {
-    // Calcule les coûts des clusters se terminant à l'index i
-    // v[j] = coût d'un cluster de j+1 points se terminant à i
-
     std::cout << "DEBUG clusterCostsBefore: i=" << i << " v.size()=" << v.size() << std::endl;
 
-    // Réinitialiser le vecteur
     std::fill(v.begin(), v.end(), std::numeric_limits<double>::max());
 
     if (v.size() == 0 || i >= N) return;
 
-    // Pour chaque nombre de points possible dans le cluster (1 à i+1)
     for (uint numPoints = 1; numPoints <= i + 1 && numPoints <= v.size(); numPoints++) {
-        uint clusterStart = i - numPoints + 1;  // Index de début du cluster
-        uint clusterEnd = i;                    // Index de fin du cluster (inclus)
+        uint clusterStart = i - numPoints + 1;
+        uint clusterEnd = i;
 
         if (clusterStart > clusterEnd || clusterEnd >= N) {
             continue;
         }
 
         double cost = calculateClusterCost(clusterStart, clusterEnd);
-        v[numPoints - 1] = cost;  // v[0] = coût pour 1 point, v[1] = coût pour 2 points, etc.
+        v[numPoints - 1] = cost;
 
         std::cout << "DEBUG: v[" << (numPoints - 1) << "] = " << cost
                   << " (cluster [" << clusterStart << ", " << clusterEnd << "], "
@@ -31,28 +34,29 @@ void MedoidsDP::clusterCostsBefore(uint i, vector<double>& v) {
     }
 }
 
+/**
+ * Computes cluster costs for all possible clusters starting from index 0
+ * Used by the DP algorithm to initialize the first row of the DP matrix
+ *
+ * @param v Output vector where v[j] = cost of cluster with first j+1 points
+ */
 void MedoidsDP::clusterCostsFromBeginning(vector<double>& v) {
-    // Calcule les coûts des clusters commençant à l'index 0
-    // v[j] = coût d'un cluster des j+1 premiers points
-
     std::cout << "DEBUG clusterCostsFromBeginning: v.size()=" << v.size() << std::endl;
 
-    // Réinitialiser le vecteur
     std::fill(v.begin(), v.end(), std::numeric_limits<double>::max());
 
     if (v.size() == 0) return;
 
-    // Pour chaque nombre de points possible dans le cluster (1 à N)
     for (uint numPoints = 1; numPoints <= N && numPoints <= v.size(); numPoints++) {
-        uint clusterStart = 0;                  // Toujours commencer à 0
-        uint clusterEnd = numPoints - 1;        // Index de fin (inclus) pour numPoints points
+        uint clusterStart = 0;
+        uint clusterEnd = numPoints - 1;
 
         if (clusterEnd >= N) {
             continue;
         }
 
         double cost = calculateClusterCost(clusterStart, clusterEnd);
-        v[numPoints - 1] = cost;  // v[0] = coût pour 1 point, v[1] = coût pour 2 points, etc.
+        v[numPoints - 1] = cost;
 
         std::cout << "DEBUG: v[" << (numPoints - 1) << "] = " << cost
                   << " (cluster [" << clusterStart << ", " << clusterEnd << "], "
@@ -60,15 +64,23 @@ void MedoidsDP::clusterCostsFromBeginning(vector<double>& v) {
     }
 }
 
+/**
+ * Calculates the optimal k-medoids cost for a cluster of consecutive points
+ * Tests each point in the range as a potential medoid and returns the minimum cost
+ * Cost is the sum of squared Euclidean distances from all points to the medoid
+ *
+ * @param start Starting index of the cluster (inclusive)
+ * @param end Ending index of the cluster (inclusive)
+ * @return Minimum cost achieved by the optimal medoid selection
+ */
 double MedoidsDP::calculateClusterCost(uint start, uint end) const {
     if (start > end) return 0.0;
-    if (start == end) return 0.0; // Un seul point = coût 0
+    if (start == end) return 0.0;
 
     double minCost = std::numeric_limits<double>::max();
 
     std::cout << "    calculateClusterCost [" << start << ", " << end << "]:" << std::endl;
 
-    // Tester chaque point comme médoïde
     for (uint medoid = start; medoid <= end; medoid++) {
         double cost = 0.0;
         for (uint i = start; i <= end; i++) {

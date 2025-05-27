@@ -1,6 +1,5 @@
 #include "solverInterval.hpp"
 #include <algorithm>
-#include <iostream>
 #include <numeric>
 
 void SolverInterval::computeSolutionFromIntervals() {
@@ -30,7 +29,6 @@ void SolverInterval::resort() {
     std::vector<size_t> indices(N);
     std::iota(indices.begin(), indices.end(), 0);
 
-    // TRI CROISSANT (corrigé)
     std::sort(indices.begin(), indices.end(), [this](size_t a, size_t b) {
         return getCoordinate(a, 0) < getCoordinate(b, 0);
     });
