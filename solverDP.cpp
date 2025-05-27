@@ -1,215 +1,162 @@
+#include "solverDP.hpp"
 #include <iostream>
 #include <limits>
-#include <vector>
-#include "solverDP.hpp"
 
-using namespace std;
-
-/**
- * Display the final costs of each cluster configuration
- *
- * @param sep Separator to use between values
- */
-void SolverDP::printFinalCosts(string sep) {
-    cout << endl;
-
-    if (!isMatrixAvailable()) {
-        return;
-    }
-
-    for (uint i = 0; i < K; i++) {
-        if (i < matrixDP.getRows() && N-1 < matrixDP.getCols()) {
-            cout << "avec " << i + 1 << " clusters = "<< matrixDP.getElement(i, N-1) << sep;
-        } else {
-            cout << "NA" << sep;
-        }
-    }
-    cout << endl;
-}
-
-/**
- * Print the dynamic programming matrix
- */
-void SolverDP::printMatrixDP() {
-    cout << endl;
-
-    if (!isMatrixAvailable()) {
-        return;
-    }
-
-    for (int i = K-1; i >= 0; i--) {
-        for (uint n = 0; n < N; n++) {
-            if (i < static_cast<int>(matrixDP.getRows()) && n < matrixDP.getCols()) {
-                cout << matrixDP.getElement(i, n) << " ";
-            } else {
-                cout << "NA ";
-            }
-        }
-        cout << endl;
-    }
-    cout << endl;
-}
-
-/**
- * Fill the first row of the DP matrix with costs for single-cluster configurations
- */
-void SolverDP::fillFirstLine(vector<double>& v) {
-    if (N == 0) return;
-
-    // Calculate costs for clusters that start from the beginning of the array
-    clusterCostsFromBeginning(v);
-
-    // Fill the first row of the matrix with these costs
-    for (uint i = 0; i < N && i < matrixDP.getCols(); i++) {
-        matrixDP.setElement(0, i, v[i]);
-    }
-}
-
-/**
- * Main solve method implementing the dynamic programming algorithm
- */
 void SolverDP::solve() {
-    // Input validation
-    if (!validateInputs()) {
-        return;
+    if (!validateInputs()) return;
+
+    resort(); // Trier les points
+
+    std::cout << "Points triés:" << std::endl;
+    for (size_t i = 0; i < N; i++) {
+        std::cout << "  " << i << ": ";
+        displayPoint(i);
+        std::cout << std::endl;
     }
 
-    // Ensure points are sorted on the first dimension
-    resort();
-
-    // Initialize DP matrix
     initializeMatrix();
 
     vector<double> v(N, 0.0);
-    // Fill the first line representing single cluster costs
     fillFirstLine(v);
-
-    // Fill the rest of the matrix using dynamic programming
     fillDPMatrix(v);
-
-    // Backtracking to build the solution
     buildSolutionFromMatrix();
-
-    // Compute final solution from intervals
     computeSolutionFromIntervals();
-
-    // Calculate the final cost
     calculateFinalCost();
 }
 
-/**
- * Validate input parameters
- *
- * @return true if inputs are valid, false otherwise
- */
 bool SolverDP::validateInputs() {
-    if (N == 0) {
-        cout << "Erreur: N est égal à 0" << endl;
-        return false;
-    }
-
-    if (K == 0) {
-        cout << "Erreur: K est égal à 0" << endl;
-        return false;
-    }
-
-    return true;
+    return N > 0 && K > 0;
 }
 
-/**
- * Initialize the dynamic programming matrix
- */
 void SolverDP::initializeMatrix() {
-    matrixDP.initMatrix(N, K);
-    cout << "Matrice initialisée avec " << matrixDP.getRows() << " lignes et " << matrixDP.getCols() << " colonnes" << endl;
+    matrixDP.initMatrix(K, N); // K lignes, N colonnes
+
+    // Initialiser avec des valeurs infinies
+    for (size_t k = 0; k < K; k++) {
+        for (size_t n = 0; n < N; n++) {
+            matrixDP.setElement(k, n, std::numeric_limits<double>::max());
+        }
+    }
+
+    std::cout << "Matrice initialisée avec " << matrixDP.getRows()
+              << " lignes et " << matrixDP.getCols() << " colonnes" << std::endl;
 }
 
-/**
- * Fill the dynamic programming matrix with optimal costs
- */
+void SolverDP::fillFirstLine(vector<double>& v) {
+    if (N == 0) return;
+
+    std::cout << "DEBUG fillFirstLine: calling clusterCostsFromBeginning" << std::endl;
+    clusterCostsFromBeginning(v);
+
+    std::cout << "DEBUG fillFirstLine: v = ";
+    for (size_t i = 0; i < v.size(); i++) {
+        std::cout << v[i] << " ";
+    }
+    std::cout << std::endl;
+
+    // Remplir la première ligne : dp[0][n] = coût pour mettre les n+1 premiers points en 1 cluster
+    for (uint n = 0; n < N && n < matrixDP.getCols(); n++) {
+        if (n < v.size()) {
+            matrixDP.setElement(0, n, v[n]);
+            std::cout << "DEBUG: matrixDP[0][" << n << "] = " << v[n] << std::endl;
+        }
+    }
+}
+
 void SolverDP::fillDPMatrix(vector<double>& v) {
     for (uint k = 1; k < K && k < matrixDP.getRows(); k++) {
+        for (uint n = k; n < N; n++) { // Au moins k+1 points pour k+1 clusters
 
-        for (uint n = k; n < N; n++) {
-            // Get costs for clusters ending at point n
+            // Utiliser la méthode existante avec clusterCostsBefore
             clusterCostsBefore(n, v);
-
-            // Find and store the optimal cost for this subproblem
             OptimalSplit optSplit = findOptimalSplit(k, n, v);
 
             if (k < matrixDP.getRows() && n < matrixDP.getCols()) {
                 matrixDP.setElement(k, n, optSplit.cost);
+                std::cout << "DEBUG: matrixDP[" << k << "][" << n << "] = " << optSplit.cost
+                          << " (split=" << optSplit.splitPoint << ")" << std::endl;
             }
         }
     }
 }
 
-/**
- * Find the optimal split point for a given configuration
- *
- * @param k Current cluster index
- * @param n Current point index
- * @param v Vector of costs for different cluster lengths
- * @return Optimal split information (cost and split point)
- */
 SolverDP::OptimalSplit SolverDP::findOptimalSplit(uint k, uint n, const vector<double>& v) {
     OptimalSplit result;
     result.cost = std::numeric_limits<double>::max();
     result.splitPoint = 0;
     result.isValid = false;
 
-    // Try all possible split points
-    for (uint split = k-1; split < n; split++) {
-        if (k-1 < matrixDP.getRows() && split < matrixDP.getCols() &&
-            n-split-1 < v.size() && n-split-1 >= 0) {
+    std::cout << "    findOptimalSplit: k=" << k << " n=" << n << " v.size()=" << v.size() << std::endl;
 
-            double cost = matrixDP.getElement(k-1, split) + v[n-split-1];
-            if (cost < result.cost) {
-                result.cost = cost;
-                result.splitPoint = split;
-                result.isValid = true;
+    for (uint split = k-1; split < n; split++) {
+        if (split < matrixDP.getCols()) {
+            double leftCost = matrixDP.getElement(k-1, split);
+
+            // Nombre de points dans le dernier cluster : de split+1 à n (inclus)
+            uint clusterSize = n - split;  // nombre de points dans le dernier cluster
+
+            if (clusterSize > 0 && clusterSize - 1 < v.size()) {
+                double rightCost = v[clusterSize - 1];  // v[clusterSize-1] = coût pour clusterSize points
+                double totalCost = leftCost + rightCost;
+
+                std::cout << "      split=" << split << " leftCost=" << leftCost
+                          << " clusterSize=" << clusterSize << " rightCost=" << rightCost
+                          << " totalCost=" << totalCost << std::endl;
+
+                if (totalCost < result.cost && leftCost != std::numeric_limits<double>::max()
+                    && rightCost != std::numeric_limits<double>::max()) {
+                    result.cost = totalCost;
+                    result.splitPoint = split;
+                    result.isValid = true;
+                }
             }
         }
     }
 
+    std::cout << "    --> bestCost=" << result.cost << " bestSplit=" << result.splitPoint << std::endl;
     return result;
 }
 
-/**
- * Build the solution by backtracking from the DP matrix
- */
 void SolverDP::buildSolutionFromMatrix() {
     solutionInterval.clear();
-    uint remainingPoints = N-1;
 
-    // Work backwards to find optimal split points
-    for (int k = K-1; k > 0; k--) {
-        vector<double> v(N, 0.0);
-        clusterCostsBefore(remainingPoints, v);
+    // Backtracking pour reconstruire les intervalles
+    uint currentK = K - 1;
+    uint currentN = N - 1;
+    vector<double> v(N, 0.0);
 
-        OptimalSplit optSplit = findOptimalSplit(k, remainingPoints, v);
+    while (currentK > 0) {
+        // Calculer les coûts pour cette position
+        clusterCostsBefore(currentN, v);
 
-        // Add this interval to our solution only if we found a valid split
+        // Trouver le split optimal pour cette étape
+        OptimalSplit optSplit = findOptimalSplit(currentK, currentN, v);
+
         if (optSplit.isValid) {
-            solutionInterval.push_back(make_pair(optSplit.splitPoint+1, remainingPoints));
-            remainingPoints = optSplit.splitPoint;
+            // Ajouter l'intervalle du dernier cluster
+            solutionInterval.push_back(make_pair(optSplit.splitPoint + 1, currentN));
+            currentN = optSplit.splitPoint;
+            currentK--;
         } else {
             break;
         }
     }
 
-    // Add the first cluster if needed
-    if (remainingPoints > 0) {
-        solutionInterval.push_back(make_pair(0, remainingPoints));
+    // Ajouter le premier cluster
+    if (currentK == 0) {
+        solutionInterval.push_back(make_pair(0, currentN));
     }
 
-    // Reverse the intervals to get them in ascending order
+    // Inverser pour avoir l'ordre correct
     reverse(solutionInterval.begin(), solutionInterval.end());
+
+    std::cout << "\nIntervalles reconstruits:" << std::endl;
+    for (size_t i = 0; i < solutionInterval.size(); i++) {
+        std::cout << "Cluster " << i+1 << ": [" << solutionInterval[i].first
+                  << ", " << solutionInterval[i].second << "]" << std::endl;
+    }
 }
 
-/**
- * Calculate the final cost of the solution
- */
 void SolverDP::calculateFinalCost() {
     if (K-1 < matrixDP.getRows() && N-1 < matrixDP.getCols()) {
         solutionCost = matrixDP.getElement(K-1, N-1);
@@ -218,15 +165,73 @@ void SolverDP::calculateFinalCost() {
     }
 }
 
-/**
- * Check if the matrix is available (not deleted)
- *
- * @return true if matrix is available, false otherwise
- */
-bool SolverDP::isMatrixAvailable() {
-    if (matrixDP.getRows() == 0 || matrixDP.getCols() == 0) {
-        cout << "Matrice non disponible (déjà libérée)" << endl;
-        return false;
+double SolverDP::calculateRealClusterCost() const {
+    double totalCost = 0.0;
+    for (size_t k = 1; k <= K; k++) {
+        vector<size_t> clusterPoints;
+        for (size_t i = 0; i < N; i++) {
+            if (solution[i] == k) {
+                clusterPoints.push_back(i);
+            }
+        }
+
+        if (clusterPoints.size() <= 1) continue;
+
+        double minCost = std::numeric_limits<double>::max();
+        for (size_t medoidIdx : clusterPoints) {
+            double cost = 0.0;
+            for (size_t pointIdx : clusterPoints) {
+                if (pointIdx != medoidIdx) {
+                    cost += squaredDistance(pointIdx, medoidIdx);
+                }
+            }
+            minCost = std::min(minCost, cost);
+        }
+        totalCost += minCost;
     }
-    return true;
+    return totalCost;
+}
+
+bool SolverDP::isMatrixAvailable() {
+    return matrixDP.getRows() > 0 && matrixDP.getCols() > 0;
+}
+
+void SolverDP::printMatrixDP() {
+    if (!isMatrixAvailable()) return;
+
+    std::cout << "\n=== MATRICE DP ===" << std::endl;
+    for (int k = K-1; k >= 0; k--) {
+        std::cout << "k=" << k << ": ";
+        for (uint n = 0; n < N; n++) {
+            if (k < static_cast<int>(matrixDP.getRows()) && n < matrixDP.getCols()) {
+                double val = matrixDP.getElement(k, n);
+                if (val == std::numeric_limits<double>::max()) {
+                    std::cout << "∞ ";
+                } else {
+                    std::cout << val << " ";
+                }
+            } else {
+                std::cout << "NA ";
+            }
+        }
+        std::cout << std::endl;
+    }
+}
+
+void SolverDP::printFinalCosts(string sep) {
+    if (!isMatrixAvailable()) return;
+
+    for (uint k = 0; k < K; k++) {
+        if (k < matrixDP.getRows() && N-1 < matrixDP.getCols()) {
+            double val = matrixDP.getElement(k, N-1);
+            if (val == std::numeric_limits<double>::max()) {
+                std::cout << "avec " << k + 1 << " clusters = ∞" << sep;
+            } else {
+                std::cout << "avec " << k + 1 << " clusters = " << val << sep;
+            }
+        } else {
+            std::cout << "NA" << sep;
+        }
+    }
+    std::cout << std::endl;
 }

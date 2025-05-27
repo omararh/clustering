@@ -1,110 +1,87 @@
 #include "medoidsDP.hpp"
 #include <limits>
-#include <vector>
+#include <iostream>
 
-/**
-* Calculates the optimal costs for all possible clusters ending at index i
-*
-* @param i The ending index of the clusters
-* @param v Output vector to store computed costs for each length
-*/
-void MedoidsDP::clusterCostsBefore(uint i, vector<double> &v) {
-    calculateClusterCosts(i, v, false);
-}
+void MedoidsDP::clusterCostsBefore(uint i, vector<double>& v) {
+    // Calcule les coûts des clusters se terminant à l'index i
+    // v[j] = coût d'un cluster de j+1 points se terminant à i
 
-/**
-* Calculates the optimal costs for all possible clusters starting from index 0
-*
-* @param v Output vector to store computed costs for each length
-*/
-void MedoidsDP::clusterCostsFromBeginning(vector<double> &v) {
-    calculateClusterCosts(0, v, true);
-}
+    std::cout << "DEBUG clusterCostsBefore: i=" << i << " v.size()=" << v.size() << std::endl;
 
-/**
-* Base method to calculate optimal costs for clusters with specified bounds
-*/
-void MedoidsDP::calculateClusterCosts(uint end, vector<double> &v, bool isFromBeginning) {
-    // Initialize the matrix d to store costs for each potential medoid and length
-    d.initMatrix(N, N);  // Using the member variable d
+    // Réinitialiser le vecteur
+    std::fill(v.begin(), v.end(), std::numeric_limits<double>::max());
 
-    // Handle single-point cluster case outside the loop
-    if (v.size() > 0) {
-        v[0] = 0;
-    }
+    if (v.size() == 0 || i >= N) return;
 
-    // Process each possible cluster length, starting from 1
-    for (uint len = 1; len < v.size(); len++) {
-        // Skip invalid lengths
-        if ((isFromBeginning && len >= N) || (!isFromBeginning && len > end)) {
-            v[len] = std::numeric_limits<double>::max();
+    // Pour chaque nombre de points possible dans le cluster (1 à i+1)
+    for (uint numPoints = 1; numPoints <= i + 1 && numPoints <= v.size(); numPoints++) {
+        uint clusterStart = i - numPoints + 1;  // Index de début du cluster
+        uint clusterEnd = i;                    // Index de fin du cluster (inclus)
+
+        if (clusterStart > clusterEnd || clusterEnd >= N) {
             continue;
         }
 
-        // Determine current cluster bounds
-        uint clusterStart = isFromBeginning ? 0 : end - len;
-        uint clusterEnd = end;
-        uint lastPoint = isFromBeginning ? len : end;
+        double cost = calculateClusterCost(clusterStart, clusterEnd);
+        v[numPoints - 1] = cost;  // v[0] = coût pour 1 point, v[1] = coût pour 2 points, etc.
 
-        // Initialize costs for clusters of length 2
-        if (len == 1) {
-            computeInitialCosts(clusterStart, clusterEnd);  // Removed d parameter
-        }
-            // Apply recurrence relation for longer clusters
-        else {
-            updateCostsIteratively(clusterStart, clusterEnd, lastPoint, len);  // Removed d parameter
-        }
-
-        // Find the medoid that minimizes cost for this length
-        v[len] = findMinimumCost(clusterStart, clusterEnd, len);  // Removed d parameter
+        std::cout << "DEBUG: v[" << (numPoints - 1) << "] = " << cost
+                  << " (cluster [" << clusterStart << ", " << clusterEnd << "], "
+                  << numPoints << " points)" << std::endl;
     }
 }
 
-/**
-* Computes initial costs for each potential medoid in a cluster of length 2
-*/
-void MedoidsDP::computeInitialCosts(uint start, uint end) {
-    for(uint medoid = start; medoid <= end; medoid++) {
-        for(uint otherPoint = start; otherPoint <= end; otherPoint++) {
-            if(otherPoint != medoid) {
-                d.setElement(medoid, 1, squaredDistance(otherPoint, medoid));
-            }
+void MedoidsDP::clusterCostsFromBeginning(vector<double>& v) {
+    // Calcule les coûts des clusters commençant à l'index 0
+    // v[j] = coût d'un cluster des j+1 premiers points
+
+    std::cout << "DEBUG clusterCostsFromBeginning: v.size()=" << v.size() << std::endl;
+
+    // Réinitialiser le vecteur
+    std::fill(v.begin(), v.end(), std::numeric_limits<double>::max());
+
+    if (v.size() == 0) return;
+
+    // Pour chaque nombre de points possible dans le cluster (1 à N)
+    for (uint numPoints = 1; numPoints <= N && numPoints <= v.size(); numPoints++) {
+        uint clusterStart = 0;                  // Toujours commencer à 0
+        uint clusterEnd = numPoints - 1;        // Index de fin (inclus) pour numPoints points
+
+        if (clusterEnd >= N) {
+            continue;
         }
+
+        double cost = calculateClusterCost(clusterStart, clusterEnd);
+        v[numPoints - 1] = cost;  // v[0] = coût pour 1 point, v[1] = coût pour 2 points, etc.
+
+        std::cout << "DEBUG: v[" << (numPoints - 1) << "] = " << cost
+                  << " (cluster [" << clusterStart << ", " << clusterEnd << "], "
+                  << numPoints << " points)" << std::endl;
     }
 }
 
-/**
-* Updates costs using the recurrence relation for longer clusters
-*/
-void MedoidsDP::updateCostsIteratively(uint start, uint end, uint lastPoint, uint len) {
-    // For each potential medoid in the current interval
-    for (uint medoid = start; medoid <= end; medoid++) {
-        if (medoid < lastPoint) {
-            // Medoid was already in the previous interval
-            // Use recurrence relation: add cost of the new point only
-            d.setElement(medoid, len, d.getElement(medoid, len-1) + squaredDistance(lastPoint, medoid));
-        } else {
-            // New potential medoid (including lastPoint itself)
-            // Must recalculate the full cost
-            d.setElement(medoid, len, 0);
+double MedoidsDP::calculateClusterCost(uint start, uint end) const {
+    if (start > end) return 0.0;
+    if (start == end) return 0.0; // Un seul point = coût 0
 
-            // Sum distances from all other points in the interval to this medoid
-            for (uint point = start; point < end; point++) {
-                d.setElement(medoid, len, d.getElement(medoid, len) + squaredDistance(point, medoid));
-            }
-        }
-    }
-}
-
-/**
-* Finds the minimum cost among all potential medoids for a given cluster length
-*/
-double MedoidsDP::findMinimumCost(uint start, uint end, uint len) {
     double minCost = std::numeric_limits<double>::max();
-    for(uint c = start; c <= end; c++) {
-        if(d.getElement(c, len) < minCost) {
-            minCost = d.getElement(c, len);
+
+    std::cout << "    calculateClusterCost [" << start << ", " << end << "]:" << std::endl;
+
+    // Tester chaque point comme médoïde
+    for (uint medoid = start; medoid <= end; medoid++) {
+        double cost = 0.0;
+        for (uint i = start; i <= end; i++) {
+            if (i != medoid) {
+                double dist = squaredDistance(i, medoid);
+                cost += dist;
+                std::cout << "      dist(" << i << ", " << medoid << ") = " << dist << std::endl;
+            }
         }
+        std::cout << "    medoid " << medoid << ": cost = " << cost << std::endl;
+        minCost = std::min(minCost, cost);
     }
+
+    std::cout << "    --> minCost = " << minCost << std::endl;
     return minCost;
 }
