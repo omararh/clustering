@@ -2,7 +2,8 @@
 #include <vector>
 #include <string>
 #include <cmath>
-#include "iostream"
+#include <iostream>
+#include "CSVExporter.hpp"
 
 using namespace std;
 
@@ -19,7 +20,7 @@ protected:
     void displayPoint(size_t index) const {
         std::cout << "( ";
         for (size_t d = 0; d < D; ++d) {
-            std::cout << getCoordinate(index,   d);
+            std::cout << getCoordinate(index, d);
             if (d < D - 1) std::cout << ", ";
         }
         std::cout << " )";
@@ -56,4 +57,13 @@ public:
 
     void import(const string& filename);
     void displaySolution() const;
+
+    // Export CSV simple
+    void saveToCSV(const std::string& filename = "results.csv") const {
+        if (solution.empty()) {
+            std::cerr << "Erreur: Aucune solution à exporter. Exécutez solve() d'abord." << std::endl;
+            return;
+        }
+        CSVExporter::exportResults(points, solution, D, filename);
+    }
 };

@@ -1,6 +1,5 @@
 #include "solver.hpp"
 #include <iostream>
-#include <fstream>
 #include <stdexcept>
 
 void Solver::import(const std::string& filename) {

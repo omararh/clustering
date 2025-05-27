@@ -43,6 +43,19 @@ int main(int argc, char** argv) {
             std::cout << "✗ Incohérence détectée!" << std::endl;
         }
 
+        // Export automatique en CSV
+        std::string csvFilename = filename;
+        size_t lastSlash = csvFilename.find_last_of('/');
+        if (lastSlash != std::string::npos) {
+            csvFilename = csvFilename.substr(lastSlash + 1);
+        }
+        if (csvFilename.find(".txt") != std::string::npos) {
+            csvFilename.replace(csvFilename.find(".txt"), 4, ".csv");
+        }
+
+        solver.saveToCSV("results/median/" + csvFilename);
+
+
     } catch (const std::exception& e) {
         std::cerr << "ERROR: " << e.what() << std::endl;
         return 1;
