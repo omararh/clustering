@@ -23,8 +23,11 @@ void MedoidsDP::clusterCostsBefore(uint i, vector<double>& v) {
     // Parallélisation de la boucle principale si suffisamment de calculs
     bool useParallel = (i > 50); // Seuil pour éviter l'overhead sur petites instances
 
+    // Calculer la limite supérieure pour la boucle
+    uint maxPoints = std::min(static_cast<uint>(i + 1), static_cast<uint>(v.size()));
+
 #pragma omp parallel for if(useParallel) schedule(dynamic)
-    for (uint numPoints = 1; numPoints <= i + 1 && numPoints <= v.size(); numPoints++) {
+    for (uint numPoints = 1; numPoints <= maxPoints; numPoints++) {
         uint clusterStart = i - numPoints + 1;
         uint clusterEnd = i;
 
@@ -60,8 +63,11 @@ void MedoidsDP::clusterCostsFromBeginning(vector<double>& v) {
     // Parallélisation pour les grandes instances
     bool useParallel = (N > 100);
 
+    // Calculer la limite supérieure pour la boucle
+    uint maxPoints = std::min(static_cast<uint>(N), static_cast<uint>(v.size()));
+
 #pragma omp parallel for if(useParallel) schedule(dynamic)
-    for (uint numPoints = 1; numPoints <= N && numPoints <= v.size(); numPoints++) {
+    for (uint numPoints = 1; numPoints <= maxPoints; numPoints++) {
         uint clusterStart = 0;
         uint clusterEnd = numPoints - 1;
 

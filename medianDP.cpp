@@ -1,6 +1,9 @@
 #include "medianDP.hpp"
 #include <limits>
 #include <iostream>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 /**
  * Computes cluster costs for all possible clusters ending at index i
@@ -17,7 +20,14 @@ void MedianDP::clusterCostsBefore(uint i, vector<double>& v) {
 
     if (v.size() == 0 || i >= N) return;
 
-    for (uint numPoints = 1; numPoints <= i + 1 && numPoints <= v.size(); numPoints++) {
+    // Parallélisation de la boucle principale si suffisamment de calculs
+    bool useParallel = (i > 50); // Seuil pour éviter l'overhead sur petites instances
+
+    // Calculer la limite supérieure pour la boucle
+    uint maxPoints = std::min(static_cast<uint>(i + 1), static_cast<uint>(v.size()));
+
+#pragma omp parallel for if(useParallel) schedule(dynamic)
+    for (uint numPoints = 1; numPoints <= maxPoints; numPoints++) {
         uint clusterStart = i - numPoints + 1;
         uint clusterEnd = i;
 
@@ -28,9 +38,12 @@ void MedianDP::clusterCostsBefore(uint i, vector<double>& v) {
         double cost = calculateClusterCost(clusterStart, clusterEnd);
         v[numPoints - 1] = cost;
 
-        std::cout << "DEBUG: v[" << (numPoints - 1) << "] = " << cost
-                  << " (cluster [" << clusterStart << ", " << clusterEnd << "], "
-                  << numPoints << " points)" << std::endl;
+#pragma omp critical
+        {
+            std::cout << "DEBUG: v[" << (numPoints - 1) << "] = " << cost
+                      << " (cluster [" << clusterStart << ", " << clusterEnd << "], "
+                      << numPoints << " points)" << std::endl;
+        }
     }
 }
 
@@ -47,7 +60,14 @@ void MedianDP::clusterCostsFromBeginning(vector<double>& v) {
 
     if (v.size() == 0) return;
 
-    for (uint numPoints = 1; numPoints <= N && numPoints <= v.size(); numPoints++) {
+    // Parallélisation pour les grandes instances
+    bool useParallel = (N > 100);
+
+    // Calculer la limite supérieure pour la boucle
+    uint maxPoints = std::min(static_cast<uint>(N), static_cast<uint>(v.size()));
+
+#pragma omp parallel for if(useParallel) schedule(dynamic)
+    for (uint numPoints = 1; numPoints <= maxPoints; numPoints++) {
         uint clusterStart = 0;
         uint clusterEnd = numPoints - 1;
 
@@ -58,9 +78,12 @@ void MedianDP::clusterCostsFromBeginning(vector<double>& v) {
         double cost = calculateClusterCost(clusterStart, clusterEnd);
         v[numPoints - 1] = cost;
 
-        std::cout << "DEBUG: v[" << (numPoints - 1) << "] = " << cost
-                  << " (cluster [" << clusterStart << ", " << clusterEnd << "], "
-                  << numPoints << " points)" << std::endl;
+#pragma omp critical
+        {
+            std::cout << "DEBUG: v[" << (numPoints - 1) << "] = " << cost
+                      << " (cluster [" << clusterStart << ", " << clusterEnd << "], "
+                      << numPoints << " points)" << std::endl;
+        }
     }
 }
 
@@ -78,22 +101,47 @@ double MedianDP::calculateClusterCost(uint start, uint end) const {
     if (start == end) return 0.0;
 
     double minCost = std::numeric_limits<double>::max();
+    uint clusterSize = end - start + 1;
 
-    std::cout << "    MedianDP::calculateClusterCost [" << start << ", " << end << "]:" << std::endl;
+    // Parallélisation du calcul des médians pour les clusters suffisamment grands
+    bool useParallel = (clusterSize > 20);
 
+#pragma omp critical
+    {
+        std::cout << "    MedianDP::calculateClusterCost [" << start << ", " << end << "]:" << std::endl;
+    }
+
+#pragma omp parallel for if(useParallel) reduction(min:minCost) schedule(dynamic)
     for (uint median = start; median <= end; median++) {
         double cost = 0.0;
+
+        // Calcul séquentiel des distances pour chaque median
         for (uint i = start; i <= end; i++) {
             if (i != median) {
                 double dist = sqrt(squaredDistance(i, median));
                 cost += dist;
-                std::cout << "      dist(" << i << ", " << median << ") = " << dist << std::endl;
+
+#pragma omp critical
+                {
+                    std::cout << "      dist(" << i << ", " << median << ") = " << dist << std::endl;
+                }
             }
         }
-        std::cout << "    median " << median << ": cost = " << cost << std::endl;
-        minCost = std::min(minCost, cost);
+
+#pragma omp critical
+        {
+            std::cout << "    median " << median << ": cost = " << cost << std::endl;
+        }
+
+        if (cost < minCost) {
+            minCost = cost;
+        }
     }
 
-    std::cout << "    --> minCost = " << minCost << std::endl;
+#pragma omp critical
+    {
+        std::cout << "    --> minCost = " << minCost << std::endl;
+    }
+
     return minCost;
 }

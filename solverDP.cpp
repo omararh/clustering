@@ -1,6 +1,7 @@
 #include "solverDP.hpp"
 #include <iostream>
 #include <limits>
+#include <algorithm>
 #ifdef _OPENMP
 #include <omp.h>
 #endif
