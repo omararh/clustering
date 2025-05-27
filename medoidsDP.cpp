@@ -1,6 +1,9 @@
 #include "medoidsDP.hpp"
 #include <limits>
 #include <iostream>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 /**
  * Computes cluster costs for all possible clusters ending at index i
@@ -17,6 +20,10 @@ void MedoidsDP::clusterCostsBefore(uint i, vector<double>& v) {
 
     if (v.size() == 0 || i >= N) return;
 
+    // Parallélisation de la boucle principale si suffisamment de calculs
+    bool useParallel = (i > 50); // Seuil pour éviter l'overhead sur petites instances
+
+#pragma omp parallel for if(useParallel) schedule(dynamic)
     for (uint numPoints = 1; numPoints <= i + 1 && numPoints <= v.size(); numPoints++) {
         uint clusterStart = i - numPoints + 1;
         uint clusterEnd = i;
@@ -28,9 +35,12 @@ void MedoidsDP::clusterCostsBefore(uint i, vector<double>& v) {
         double cost = calculateClusterCost(clusterStart, clusterEnd);
         v[numPoints - 1] = cost;
 
-        std::cout << "DEBUG: v[" << (numPoints - 1) << "] = " << cost
-                  << " (cluster [" << clusterStart << ", " << clusterEnd << "], "
-                  << numPoints << " points)" << std::endl;
+#pragma omp critical
+        {
+            std::cout << "DEBUG: v[" << (numPoints - 1) << "] = " << cost
+                      << " (cluster [" << clusterStart << ", " << clusterEnd << "], "
+                      << numPoints << " points)" << std::endl;
+        }
     }
 }
 
@@ -47,6 +57,10 @@ void MedoidsDP::clusterCostsFromBeginning(vector<double>& v) {
 
     if (v.size() == 0) return;
 
+    // Parallélisation pour les grandes instances
+    bool useParallel = (N > 100);
+
+#pragma omp parallel for if(useParallel) schedule(dynamic)
     for (uint numPoints = 1; numPoints <= N && numPoints <= v.size(); numPoints++) {
         uint clusterStart = 0;
         uint clusterEnd = numPoints - 1;
@@ -58,9 +72,12 @@ void MedoidsDP::clusterCostsFromBeginning(vector<double>& v) {
         double cost = calculateClusterCost(clusterStart, clusterEnd);
         v[numPoints - 1] = cost;
 
-        std::cout << "DEBUG: v[" << (numPoints - 1) << "] = " << cost
-                  << " (cluster [" << clusterStart << ", " << clusterEnd << "], "
-                  << numPoints << " points)" << std::endl;
+#pragma omp critical
+        {
+            std::cout << "DEBUG: v[" << (numPoints - 1) << "] = " << cost
+                      << " (cluster [" << clusterStart << ", " << clusterEnd << "], "
+                      << numPoints << " points)" << std::endl;
+        }
     }
 }
 
@@ -78,22 +95,47 @@ double MedoidsDP::calculateClusterCost(uint start, uint end) const {
     if (start == end) return 0.0;
 
     double minCost = std::numeric_limits<double>::max();
+    uint clusterSize = end - start + 1;
 
-    std::cout << "    calculateClusterCost [" << start << ", " << end << "]:" << std::endl;
+    // Parallélisation du calcul des médoïdes pour les clusters suffisamment grands
+    bool useParallel = (clusterSize > 20);
 
+#pragma omp critical
+    {
+        std::cout << "    calculateClusterCost [" << start << ", " << end << "]:" << std::endl;
+    }
+
+#pragma omp parallel for if(useParallel) reduction(min:minCost) schedule(dynamic)
     for (uint medoid = start; medoid <= end; medoid++) {
         double cost = 0.0;
+
+        // Calcul séquentiel des distances pour chaque médoïde
         for (uint i = start; i <= end; i++) {
             if (i != medoid) {
                 double dist = squaredDistance(i, medoid);
                 cost += dist;
-                std::cout << "      dist(" << i << ", " << medoid << ") = " << dist << std::endl;
+
+#pragma omp critical
+                {
+                    std::cout << "      dist(" << i << ", " << medoid << ") = " << dist << std::endl;
+                }
             }
         }
-        std::cout << "    medoid " << medoid << ": cost = " << cost << std::endl;
-        minCost = std::min(minCost, cost);
+
+#pragma omp critical
+        {
+            std::cout << "    medoid " << medoid << ": cost = " << cost << std::endl;
+        }
+
+        if (cost < minCost) {
+            minCost = cost;
+        }
     }
 
-    std::cout << "    --> minCost = " << minCost << std::endl;
+#pragma omp critical
+    {
+        std::cout << "    --> minCost = " << minCost << std::endl;
+    }
+
     return minCost;
 }
