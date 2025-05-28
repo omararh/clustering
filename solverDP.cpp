@@ -14,14 +14,6 @@ void SolverDP::solve() {
 #endif
 
     resort(); // Trier les points
-
-    std::cout << "Points triés:" << std::endl;
-    for (size_t i = 0; i < N; i++) {
-        std::cout << "  " << i << ": ";
-        displayPoint(i);
-        std::cout << std::endl;
-    }
-
     initializeMatrix();
 
     vector<double> v(N, 0.0);
@@ -94,12 +86,16 @@ void SolverDP::fillDPMatrix(vector<double>& v) {
                 OptimalSplit optSplit = findOptimalSplit(k, n, local_v);
 
                 if (k < matrixDP.getRows() && n < matrixDP.getCols()) {
+/*
 #pragma omp critical
                     {
+*/
                         matrixDP.setElement(k, n, optSplit.cost);
+/*
                         std::cout << "DEBUG: matrixDP[" << k << "][" << n << "] = " << optSplit.cost
                                   << " (split=" << optSplit.splitPoint << ")" << std::endl;
-                    }
+                     }
+*/
                 }
             }
         }
@@ -139,12 +135,14 @@ SolverDP::OptimalSplit SolverDP::findOptimalSplit(uint k, uint n, const vector<d
                     double rightCost = v[clusterSize - 1];
                     double totalCost = leftCost + rightCost;
 
+/*
 #pragma omp critical
                     {
                         std::cout << "      split=" << split << " leftCost=" << leftCost
                                   << " clusterSize=" << clusterSize << " rightCost=" << rightCost
                                   << " totalCost=" << totalCost << std::endl;
                     }
+*/
 
                     if (totalCost < localBestCost &&
                         leftCost != std::numeric_limits<double>::max() &&

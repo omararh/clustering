@@ -38,12 +38,14 @@ void MedianDP::clusterCostsBefore(uint i, vector<double>& v) {
         double cost = calculateClusterCost(clusterStart, clusterEnd);
         v[numPoints - 1] = cost;
 
+/*
 #pragma omp critical
         {
             std::cout << "DEBUG: v[" << (numPoints - 1) << "] = " << cost
                       << " (cluster [" << clusterStart << ", " << clusterEnd << "], "
                       << numPoints << " points)" << std::endl;
         }
+*/
     }
 }
 
@@ -78,12 +80,14 @@ void MedianDP::clusterCostsFromBeginning(vector<double>& v) {
         double cost = calculateClusterCost(clusterStart, clusterEnd);
         v[numPoints - 1] = cost;
 
+/*
 #pragma omp critical
         {
             std::cout << "DEBUG: v[" << (numPoints - 1) << "] = " << cost
                       << " (cluster [" << clusterStart << ", " << clusterEnd << "], "
                       << numPoints << " points)" << std::endl;
         }
+*/
     }
 }
 
@@ -106,10 +110,12 @@ double MedianDP::calculateClusterCost(uint start, uint end) const {
     // Parallélisation du calcul des médians pour les clusters suffisamment grands
     bool useParallel = (clusterSize > 20);
 
+/*
 #pragma omp critical
     {
         std::cout << "    MedianDP::calculateClusterCost [" << start << ", " << end << "]:" << std::endl;
     }
+*/
 
 #pragma omp parallel for if(useParallel) reduction(min:minCost) schedule(dynamic)
     for (uint median = start; median <= end; median++) {
@@ -121,27 +127,33 @@ double MedianDP::calculateClusterCost(uint start, uint end) const {
                 double dist = sqrt(squaredDistance(i, median));
                 cost += dist;
 
+/*
 #pragma omp critical
                 {
                     std::cout << "      dist(" << i << ", " << median << ") = " << dist << std::endl;
                 }
+*/
             }
         }
 
+/*
 #pragma omp critical
         {
             std::cout << "    median " << median << ": cost = " << cost << std::endl;
         }
+*/
 
         if (cost < minCost) {
             minCost = cost;
         }
     }
 
+/*
 #pragma omp critical
     {
         std::cout << "    --> minCost = " << minCost << std::endl;
     }
+*/
 
     return minCost;
 }

@@ -25,3 +25,10 @@ make medoids
 make median
 
 ./o.out
+
+## Lancement du benchMark pour vérifier la ressemblance des solutions
+g++-14 -std=c++17 -fopenmp -O3 -o benchmark test-main.cpp medoidsDP.cpp medianDP.cpp solverDP.cpp solverInterval.cpp solver.cpp -I.
+
+./benchmark
+
+un fichier `benchmark_cross_validation.csv` sera générer dans le dossier `results`

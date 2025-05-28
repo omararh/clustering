@@ -58,6 +58,9 @@ public:
     void import(const string& filename);
     void displaySolution() const;
 
+    const std::vector<double>& getPoints() const { return points; }
+    const std::vector<size_t>& getSolution() const { return solution; }
+
     // Export CSV simple
     void saveToCSV(const std::string& filename = "results.csv") const {
         if (solution.empty()) {

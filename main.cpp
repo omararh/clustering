@@ -3,7 +3,7 @@
 #include "medoidsDP.hpp"
 
 int main(int argc, char** argv) {
-    std::string filename = "data/very_small_instance_2.txt";
+    std::string filename = "data/very_small_instance_3.txt";
     if (argc > 1) {
         filename = argv[1];
     }
