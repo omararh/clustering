@@ -1,3 +1,5 @@
+Toutes les informations essentielles concernant le projet sont présentées dans le fichier `rapport.pdf`
+
 # éxécution
 
 # requis : 
